@@ -29,4 +29,7 @@ Para comenzar el proceso se le compartirá un archivo comprimido con los siguien
 7. A continuación deberá seleccionar el encabezado de la fecha de corte del archivo Azure según solicitud
 8. A continuación deberá realizar las mismas dos acciones pero con respecto al archivo Maestro
   <br>Nota: en caso de que los encabezados seleccionados con anterioridad no se encuentren en las hojas, se mostrará por pantalla que no se encontraron y el nombre de la hoja
-9. Cuando de análisis sea completado el aplicativo avisará con un mensaje emergente. 
+9. Cuando de análisis sea completado el aplicativo avisará con un mensaje emergente.
+
+<br><b>Nota:</b> Los valores comparados se guardarán en dos carpetas que el mismo sistema creará en la carpeta de los archivos Azure.
+Las dos carpetas se llamarán "errores" y "messages", en las que encontrará dos archivos excel una con las no coincidencias, y otras con las coincidencias respectivamente.
