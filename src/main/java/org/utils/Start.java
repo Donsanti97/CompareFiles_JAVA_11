@@ -83,7 +83,6 @@ public class Start {
             List<String> dataList = createDualDropDownListsAndReturnSelectedValues(nameSheets1, nameSheets2);
             List<String> encabezados1;
             List<String> encabezados2;
-            String encabezado = "";
             String codigo1 = "";
             String fechacorteAF = "";
             String codigo2 = "";
@@ -105,14 +104,8 @@ public class Start {
 
             if (sheet1 != null && sheet2 != null) {
                 encabezados1 = getHeadersN(sheet1);
-                JOptionPane.showMessageDialog(null, "Del siguiente menú escoja el primer encabezado ubicado en las hojas del archivo Maestro");
-                encabezado = mostrarMenu(encabezados1);
-                while (encabezado == null) {
-                    errorMessage("No fue seleccionado el encabezado. Por favor siga la instrucción");
-                    JOptionPane.showMessageDialog(null, "Del siguiente menú escoja el primer encabezado ubicado en las hojas del archivo Maestro");
-                    encabezado = mostrarMenu(encabezados1);
-                }
-                encabezados2 = getHeadersMasterfile(sheet1, sheet2, encabezado);
+
+                encabezados2 = getHeadersMasterfile(sheet1, sheet2, encabezados1);
                 JOptionPane.showMessageDialog(null, "Seleccione el encabezado \"Código\" del archivo Azure que será usado para el análisis entre hojas");
                 codigo1 = mostrarMenu(encabezados1);
                 while (codigo1 == null) {
@@ -160,7 +153,7 @@ public class Start {
                             "\n O diferente al que seleccionó al comienzo del programa? ?");
                     if (yesNoAnswer.equals("SI")){
                         encabezados1 = getHeadersN(sheet1);
-                        encabezados2 = getHeadersMasterfile(sheet1, sheet2, encabezado);
+                        encabezados2 = getHeadersMasterfile(sheet1, sheet2, encabezados1);
 
                         JOptionPane.showMessageDialog(null, "Seleccione el encabezado del archivo Azure que desee compara entre los dos archivos");
                         fechacorteAF = mostrarMenu(encabezados1);
@@ -177,7 +170,7 @@ public class Start {
                             JOptionPane.showMessageDialog(null, "Seleccione el encabezado del archivo Maestro que será analizada");
                             fechaCorteMF = mostrarMenu(encabezados2);
                         }
-                        messageSheets(sheet1, sheet2, workbook, workbook2, codigo1, fechacorteAF, codigo2, fechaCorteMF, encabezado);
+                        messageSheets(sheet1, sheet2, workbook, workbook2, codigo1, fechacorteAF, codigo2, fechaCorteMF);
 
                     } else {
                         message = "La fecha de corte que intenta validar no se encuentra. \n La hoja [" + sheet2.getSheetName() + "] no se podrá analizar";
@@ -186,7 +179,7 @@ public class Start {
                     }
 
                 }else {
-                    messageSheets(sheet1, sheet2, workbook, workbook2, codigo1, fechacorteAF, codigo2, fechaCorteMF, encabezado);
+                    messageSheets(sheet1, sheet2, workbook, workbook2, codigo1, fechacorteAF, codigo2, fechaCorteMF);
 
                 }
             }
@@ -212,7 +205,7 @@ public class Start {
     public static void messageSheets(Sheet sheet1, Sheet sheet2,
                                        Workbook workbook1, Workbook workbook2,
                                      String codigo1, String fechacorteAF,
-                                     String codigo2, String fechaCorteMF, String encabezado){
+                                     String codigo2, String fechaCorteMF){
         String message;
         List<Map<String, String>> valoresEncabezados1;
         List<Map<String, String>> valoresEncabezados2;
@@ -224,7 +217,7 @@ public class Start {
 
             /*------------------------------------------------------------------------------------------------*/
             valoresEncabezados1 = obtenerValoresPorFilas(sheet1, encabezados1, codigo1, fechacorteAF);
-            valoresEncabezados2 = obtenerValoresPorFilas(workbook1, workbook2, sheet1.getSheetName(), sheet2.getSheetName(), codigo2, fechaCorteMF, encabezado);
+            valoresEncabezados2 = obtenerValoresPorFilas(workbook1, workbook2, sheet1.getSheetName(), sheet2.getSheetName(), codigo2, fechaCorteMF, encabezados1);
 
             if (valoresEncabezados1 != null && valoresEncabezados2 != null) {
                 mapList1 = createMapList(valoresEncabezados1, codigo1, fechacorteAF);

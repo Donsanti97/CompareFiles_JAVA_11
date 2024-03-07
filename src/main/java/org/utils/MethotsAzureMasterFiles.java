@@ -92,15 +92,28 @@ public class MethotsAzureMasterFiles {
         return null; // Valor no encontrado en la columna especificada
     }
 
-    public static List<String> getHeadersMasterfile(Sheet sheet1, Sheet sheet2, String seleccion) throws IOException {
-        List<String> headers1 = getHeaders(sheet1);
-        String headerFirstFile1 = headers1.get(0);
-        List<String> headers2 = getHeaders(sheet2);
-        String headerSecondFile = headers2.get(0);
+    public static List<String> getHeadersMasterfile(Sheet sheet1, Sheet sheet2, List<String> headers) {
+        List<String> headers1;
+        List<String> headers2;
+        try {
+            headers1 = getHeaders(sheet1);
+            String headerFirstFile1 = headers1.get(0);
+            headers2 = getHeaders(sheet2);
+            String headerSecondFile = headers2.get(0);
 
-        if (!headerFirstFile1.equals(headerSecondFile)) {
-            headers2 = findValueInColumn(sheet2, 0, seleccion);
+            salida:
+            if (!headerFirstFile1.equals(headerSecondFile)) {
+                for (String seleccion : headers) {
+                    headers2 = findValueInColumn(sheet2, 0, seleccion);
+                    if (headers2 != null){
+                        break salida;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+
 
         return headers2;
     }
@@ -310,12 +323,12 @@ public class MethotsAzureMasterFiles {
         }
     }
 
-    public static List<Map<String, String>> obtenerValoresPorFilas(Workbook workbook1, Workbook workbook2, String sheetName1, String sheetName2, String header1, String header2, String firstMHeader) throws IOException {
+    public static List<Map<String, String>> obtenerValoresPorFilas(Workbook workbook1, Workbook workbook2, String sheetName1, String sheetName2, String header1, String header2, List<String> headersAzureF) throws IOException {
         List<Map<String, String>> valoresPorFilas = new ArrayList<>();
         Sheet sheet1 = workbook1.getSheet(sheetName1);
         Sheet sheet2 = workbook2.getSheet(sheetName2);
 
-        List<String> encabezados = getHeadersMasterfile(sheet1, sheet2, firstMHeader);
+        List<String> encabezados = getHeadersMasterfile(sheet1, sheet2, headersAzureF);
 
         int indexHeader1 = encabezados.indexOf(header1);
         int indexHeader2 = encabezados.indexOf(header2);
