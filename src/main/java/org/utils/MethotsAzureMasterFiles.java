@@ -5,21 +5,17 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.*;
 import java.awt.Font;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.*;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.*;
 
 public class MethotsAzureMasterFiles {
 
@@ -27,33 +23,7 @@ public class MethotsAzureMasterFiles {
     public static List<String> errores = new ArrayList<>();
     public  static List<String> coincidencias = new ArrayList<>();
 
-
-
-    public static void buscarYListarArchivos(String ubicacion) throws IOException {
-        Path ruta = Paths.get(ubicacion);
-
-        if (!Files.exists(ruta)) {
-            System.out.println("La ubicación no existe. Creando...");
-            Files.createDirectories(ruta);
-            System.out.println("Ubicación creada: " + ubicacion);
-        } else {
-            System.out.println("La ubicación ya existe: " + ubicacion);
-            listarArchivosEnCarpeta(ruta);
-        }
-    }
-
-    public static void listarArchivosEnCarpeta(Path carpeta) throws IOException {
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(carpeta)) {
-            for (Path archivo : stream) {
-                if (Files.isRegularFile(archivo)) {
-                    System.out.println("Archivo: " + archivo.getFileName());
-                }
-            }
-        }
-    }
-
-
-    public static String getDocument() {
+   public static String getDocument() {
         // Crea un objeto JFileChooser
         JFileChooser fileChooser = new JFileChooser();
 
@@ -69,70 +39,13 @@ public class MethotsAzureMasterFiles {
 
         if (resultado == JFileChooser.APPROVE_OPTION) {
             File archivoSeleccionado = fileChooser.getSelectedFile();
-            String rutaCompleta = archivoSeleccionado.getAbsolutePath();
-            return rutaCompleta;
-        } else {
-            return null; // Si no se seleccionó ningún archivo, retorna null
-        }
-    }
-
-    public static String getDirectory() {
-        // Crea un objeto JFileChooser
-        JFileChooser fileChooser = new JFileChooser();
-
-        // Configura el directorio inicial en la carpeta de documentos del usuario
-        String rutaDocumentos = System.getProperty("user.home")/* + File.separator + "Documentos"*/;
-        fileChooser.setCurrentDirectory(new File(rutaDocumentos));
-
-        // Filtra para mostrar solo archivos de Excel
-        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-        // Muestra el diálogo de selección de archivo
-        int resultado = fileChooser.showOpenDialog(null);
-
-        if (resultado == JFileChooser.APPROVE_OPTION) {
-            File archivoSeleccionado = fileChooser.getSelectedFile();
-            String rutaCompleta = archivoSeleccionado.getAbsolutePath();
-            return rutaCompleta;
+            return archivoSeleccionado.getAbsolutePath();
         } else {
             return null; // Si no se seleccionó ningún archivo, retorna null
         }
     }
 
     /*-------------------------------------------------------------------------------------------------------------------------------*/
-    public static int findSheetIndexInExcelB(String excelAFilePath, String excelBFilePath, String targetSheetName) throws IOException {
-        FileInputStream excelAFile = new FileInputStream(excelAFilePath);
-        FileInputStream excelBFile = new FileInputStream(excelBFilePath);
-
-        Workbook workbookA = new XSSFWorkbook(excelAFile);
-        Workbook workbookB = new XSSFWorkbook(excelBFile);
-
-        int sheetIndexInB = -1;
-
-        for (int i = 0; i < workbookB.getNumberOfSheets(); i++) {
-            if (workbookB.getSheetName(i).equals(targetSheetName)) {
-                sheetIndexInB = i;
-                break;
-            }
-        }
-
-        List<String> removedSheetNames = new ArrayList<>();
-
-        if (sheetIndexInB != -1) {
-            // Elimina las hojas anteriores a la hoja objetivo en Excel B
-            for (int i = 0; i < sheetIndexInB; i++) {
-                String sheetNameToRemove = workbookB.getSheetName(i);
-                removedSheetNames.add(sheetNameToRemove);
-            }
-        }
-
-        // Cerrar los archivos
-        excelAFile.close();
-        excelBFile.close();
-
-        return sheetIndexInB;
-    }
-
     public static void runtime() {
         Runtime runtime = Runtime.getRuntime();
         long minRunningMemory = (8L * 1024L * 1024L * 1024L);
@@ -141,79 +54,6 @@ public class MethotsAzureMasterFiles {
         }
     }
     /*---------------------------------------------------------------------------------------------------------------*/
-
-    public static List<String> getWorkSheet(String filePath, int i) {
-        List<String> shetNames = new ArrayList<>();
-        try {
-            Workbook workbook = WorkbookFactory.create(new File(filePath));
-            int numberOfSheets = workbook.getNumberOfSheets();
-
-            for (int index = i; index < numberOfSheets; index++) {
-                Sheet sheet = workbook.getSheetAt(index);
-                shetNames.add(sheet.getSheetName());
-            }
-            workbook.close();
-
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return shetNames;
-    }
-
-    public static List<Map<String, String>> getValuebyHeader(String excelFilePath, String sheetName) {
-        List<Map<String, String>> data = new ArrayList<>();
-        List<String> headers = getHeaders(excelFilePath, sheetName);
-        try {
-            FileInputStream fis = new FileInputStream(excelFilePath);
-            Workbook workbook = new XSSFWorkbook(fis);
-            Sheet sheet = workbook.getSheet(sheetName);
-            int numberOfRows = sheet.getPhysicalNumberOfRows();
-            for (int rowIndex = 1; rowIndex < numberOfRows; rowIndex++) {
-                Row row = sheet.getRow(rowIndex);
-                Map<String, String> rowData = new HashMap<>();
-                for (int cellIndex = 0; cellIndex < headers.size(); cellIndex++) {
-                    Cell cell = row.getCell(cellIndex);
-                    String header = headers.get(cellIndex);
-                    String value = "";
-                    if (cell != null) {
-                        if (cell.getCellType() == CellType.STRING) {
-                            value = cell.getStringCellValue();
-                            break;
-                        } else if (cell.getCellType() == CellType.NUMERIC) {
-                            value = String.valueOf(cell.getNumericCellValue());
-                        }
-                    }
-                    rowData.put(header, value);
-                }
-                data.add(rowData);
-            }
-            workbook.close();
-            fis.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return data;
-    }
-
-    public static List<String> getHeaders(String excelFilePath, String sheetName) {
-        List<String> headers = new ArrayList<>();
-        try {
-            FileInputStream fis = new FileInputStream(excelFilePath);
-            Workbook workbook = new XSSFWorkbook(fis);
-            Sheet sheet = workbook.getSheet(sheetName);
-            Row headerRow = sheet.getRow(0);
-            for (Cell cell : headerRow) {
-                headers.add(cell.getStringCellValue());
-            }
-            workbook.close();
-            fis.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return headers;
-    }
 
     public static List<String> getHeaders(Sheet sheet) {
         List<String> encabezados = new ArrayList<>();
@@ -252,53 +92,6 @@ public class MethotsAzureMasterFiles {
         return null; // Valor no encontrado en la columna especificada
     }
 
-    public static List<String> headersRow(String filePath, String sheetName, String targetHeader) {
-        try (Workbook workbook = WorkbookFactory.create(new File(filePath))) {
-            Sheet sheet = workbook.getSheet(sheetName);
-
-            if (sheet != null) {
-                for (Row row : sheet) {
-                    Cell cell = row.getCell(0);
-
-                    if (cell != null) {
-                        String cellValue = obtenerValorVisibleCelda(cell);
-                        if (targetHeader.equalsIgnoreCase(cellValue)) {
-                            int rowNum = row.getRowNum() + 1;
-
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        return null;
-    }
-
-    public static int findHeaderRow(String filePath, String sheetName, String targetHeader) {
-        try (Workbook workbook = WorkbookFactory.create(new File(filePath))) {
-            Sheet sheet = workbook.getSheet(sheetName);
-
-            if (sheet != null) {
-                for (Row row : sheet) {
-                    Cell cell = row.getCell(0); // Primera columna
-
-                    if (cell != null) {
-                        String cellValue = cell.getStringCellValue();
-                        if (targetHeader.equalsIgnoreCase(cellValue)) {
-                            return row.getRowNum() + 1; // Se suma 1 porque las filas se cuentan desde 0
-                        }
-                    }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return -1; // Retornar -1 si no se encuentra el encabezado
-    }
-
     public static List<String> getHeadersMasterfile(Sheet sheet1, Sheet sheet2, String seleccion) throws IOException {
         List<String> headers1 = getHeaders(sheet1);
         String headerFirstFile1 = headers1.get(0);
@@ -311,25 +104,6 @@ public class MethotsAzureMasterFiles {
 
         return headers2;
     }
-
-
-
-    public static List<String> getHeadersMasterfile(Sheet sheet1, Sheet sheet2) throws IOException {
-        List<String> headers1 = getHeaders(sheet1);
-        //String headerFirstFile1 = headers1.get(0);
-        List<String> headers2 = getHeaders(sheet2);
-        String headerSecondFile = headers2.get(0);
-        for (String headerFirstFile1: headers1){
-            if (!headerFirstFile1.equals(headerSecondFile)) {
-                headers2 = findValueInColumn(sheet2, 0, headerFirstFile1);
-            }
-        }
-
-
-
-        return headers2;
-    }
-
     public static List<String> obtenerValoresFila(Row row) {
         List<String> valoresFila = new ArrayList<>();
         //Iterator<Cell> cellIterator = row.cellIterator();
@@ -370,63 +144,10 @@ public class MethotsAzureMasterFiles {
         return valoresFila;
     }
 
-    public static String obtenerValorCelda(Cell cell) {
-        String valor = "";
-        if (cell != null) {
-            try {
-                switch (cell.getCellType()) {
-                    case STRING:
-                        System.out.println("CELLTYPE " + cell.getCellType() + ": " + cell.getStringCellValue() + ", CELL: " + cell);
-                        valor = cell.getStringCellValue();
-                        break;
-                    case NUMERIC:
-                        if (DateUtil.isCellDateFormatted(cell)) {
-                            //valor = cell.getDateCellValue().toString();
-                            System.out.println("CELLTYPE " + cell.getCellType() + ": " + cell.getNumericCellValue() + ", CELL: " + cell);
-                            String formatDate = cell.getDateCellValue().toString();
-                            SimpleDateFormat formatoEntrada = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
-                            Date date = formatoEntrada.parse(formatDate);
-                            SimpleDateFormat formatoSalida = new SimpleDateFormat("dd/MM/yyyy");
-                            //valor = formatoSalida.format(date);
-                            valor = cell.toString();
-                            System.out.println("VALOR1 " + valor);
-                        } else {
-                            //valor = Date.toString(cell.getDateCellValue()/*NumericCellValue()*/);
-                            System.out.println("CELLTYPE " + cell.getCellType() + ": " + cell.getNumericCellValue() + ", CELL: " + cell);
-                            valor = cell.getStringCellValue();
-                            System.out.println("VALOR3 " + valor);
-                        }
-                        break;
-                    case BOOLEAN:
-                        System.out.println("CELLTYPE " + cell.getCellType() + ": " + cell.getBooleanCellValue() + ", CELL: " + cell);
-                        valor = Boolean.toString(cell.getBooleanCellValue());
-                        break;
-                    case FORMULA:
-                        System.out.println("CELLTYPE " + cell.getCellType() + ": " + cell.getCellFormula().toString() + ", CELL: " + cell + " CELLADD: " + cell.getAddress());
-                        /*System.err.println("Formato fecha no valido."+ cell.getCellFormula() +" Encabezado "+ cell.getSheet().getSheetName() +" Posición: "+ cell.getAddress() +" puede contener formula o valor cadena de caracteres");
-                        valor = evaluarFormula(cell);
-                        System.out.println("VALORF: " + valor);
-                        FunctionsApachePoi.waitSeconds(20);
-                        System.exit(1);*/
-                        valor = obtenerValorCeldaString(cell);
-
-                        //break;
-                    default:
-                        /*valor = obtenerValorCeldaString(cell);*/
-                        break;
-                }
-
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return valor;
-    }
-
     public static String obtenerValorVisibleCelda(Cell cell) {
         try {
             DataFormatter dataFormatter = new DataFormatter();
-            String valor = "";
+            String valor;
 
             // Verificar el tipo de celda
             switch (cell.getCellType()) {
@@ -438,7 +159,7 @@ public class MethotsAzureMasterFiles {
                         valor = dataFormatter.formatCellValue(cell);
                     } else {
                         double numericValue = cell.getNumericCellValue();
-                        String dataFormatString = cell.getCellStyle().getDataFormatString();
+                        //String dataFormatString = cell.getCellStyle().getDataFormatString();
 
                         if (numericValue >= -99.99 && numericValue <= 99.99) {
                             if (numericValue == 0) {
@@ -468,7 +189,7 @@ public class MethotsAzureMasterFiles {
                 case _NONE:
                 case ERROR:
                 default:
-                    valor = /*dataFormatter.formatCellValue(cell)*/"0";
+                    valor = "0";
             }
 
             if (cell.getCellType() == null){
@@ -521,78 +242,6 @@ public class MethotsAzureMasterFiles {
         }
     }
 
-    public static String formatearNumeroConPuntos(String numero) {
-        // Convertir el número a cadena y verificar si ya tiene puntos de separación de miles
-        //String numeroStr = String.valueOf(numero);
-        if (!numero.contains(".")) {
-            // Si no tiene puntos, agregarlos
-            return agregarPuntosSeparadores(numero);
-        } else {
-            // Si ya tiene puntos, devolver la cadena original
-            return numero;
-        }
-    }
-
-    public static String agregarPuntosSeparadores(String numeroStr) {
-        // Dividir la parte entera y la parte decimal (si existe)
-        String[] partes = numeroStr.split("\\.");
-        String parteEntera = partes[0];
-        String parteDecimal = partes.length > 1 ? "." + partes[1] : "";
-
-        // Agregar puntos de separación de miles a la parte entera
-        StringBuilder resultado = new StringBuilder();
-        int contador = 0;
-        for (int i = parteEntera.length() - 1; i >= 0; i--) {
-            resultado.insert(0, parteEntera.charAt(i));
-            contador++;
-            if (contador == 3 && i > 0) {
-                resultado.insert(0, ".");
-                contador = 0;
-            }
-        }
-
-        // Combinar la parte entera formateada y la parte decimal
-        return resultado.toString() + parteDecimal;
-    }
-
-    public static String obtenerValorCeldaString(Cell cell) {
-        try {
-            DataFormatter dataFormatter = new DataFormatter();
-            String valor = dataFormatter.formatCellValue(cell);
-            return valor;
-        } catch (Exception e) {
-            return "";
-        }
-    }
-
-    public static String evaluarFormula(Cell cell) {
-        try {
-            Workbook workbook = cell.getSheet().getWorkbook();
-            FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
-            CellValue cellValue = evaluator.evaluate(cell);
-
-            if (cellValue.getCellType() == CellType.FORMULA) {
-                // Si la celda contiene una fórmula, obtén su valor calculado
-                if (cellValue.getCellType() == CellType.NUMERIC) {
-                    double valor = cellValue.getNumberValue();
-                    return Double.toString(valor);
-                } else if (cellValue.getCellType() == CellType.STRING) {
-                    return cellValue.getStringValue();
-                }
-            } else {
-                // Si no es una fórmula, obtén el valor directo de la celda
-                System.out.println("NO ES FORMULA");
-                DataFormatter dataFormatter = new DataFormatter();
-                String valor = dataFormatter.formatCellValue(cell);
-                return valor;
-            }
-        } catch (Exception e) {
-            return "";
-        }
-
-        return ""; // Valor por defecto si no se pudo obtener el valor de la fórmula
-    }
-
     public static List<Map<String, String>> createMapList(List<Map<String, String>> originalList, String keyHeader, String valueHeader) {
         List<Map<String, String>> mapList = new ArrayList<>();
 
@@ -608,7 +257,7 @@ public class MethotsAzureMasterFiles {
                 //System.out.println( "KEY: " + key + ", VALUE: " + value );
 
                 if (!key.equals(keyHeader) && !value.equals(valueHeader)) {
-                    if (key == "null") {
+                    if (key.equals("null")) {
                         //System.out.println("ENTRA AL CONDICIONAL NULL");
                         errorMap.put(key, value);
                     } else {
@@ -732,63 +381,6 @@ public class MethotsAzureMasterFiles {
         }
     }
 
-    public static List<Map<String, String>> obtenerValoresPorFilas(Workbook workbook1, Workbook workbook2, String sheetName1, String sheetName2) throws IOException {
-        List<Map<String, String>> valoresPorFilas = new ArrayList<>();
-        Sheet sheet1 = workbook1.getSheet(sheetName1);
-        Sheet sheet2 = workbook2.getSheet(sheetName2);
-
-        List<String> encabezados = getHeadersMasterfile(sheet1, sheet2);
-
-        Iterator<Row> rowIterator = sheet1.iterator();
-        // Omitir la primera fila ya que contiene los encabezados
-        if (rowIterator.hasNext()) {
-            rowIterator.next();
-        }
-
-        while (rowIterator.hasNext()) {
-            Row row = rowIterator.next();
-            List<String> valoresFila = obtenerValoresFila(row);
-
-            Map<String, String> fila = new HashMap<>();
-            for (int i = 0; i < encabezados.size() && i < valoresFila.size(); i++) {
-                String encabezado = encabezados.get(i);
-                String valor = valoresFila.get(i);
-                fila.put(encabezado, valor);
-            }
-
-            valoresPorFilas.add(fila);
-        }
-
-        return valoresPorFilas;
-    }
-
-    public static List<Map<String, String>> obtenerValoresPorFilas(Sheet sheet, Sheet sheet2) throws IOException {
-        List<Map<String, String>> valoresPorFilas = new ArrayList<>();
-        List<String> encabezados = getHeadersMasterfile(sheet, sheet2);
-
-        Iterator<Row> rowIterator = sheet.iterator();
-        // Omitir la primera fila ya que contiene los encabezados
-        if (rowIterator.hasNext()) {
-            rowIterator.next();
-        }
-
-        while (rowIterator.hasNext()) {
-            Row row = rowIterator.next();
-            List<String> valoresFila = obtenerValoresFila(row);
-
-            Map<String, String> fila = new HashMap<>();
-            for (int i = 0; i < encabezados.size() && i < valoresFila.size(); i++) {
-                String encabezado = encabezados.get(i);
-                String valor = valoresFila.get(i);
-                fila.put(encabezado, valor);
-            }
-
-            valoresPorFilas.add(fila);
-        }
-
-        return valoresPorFilas;
-    }
-
     public static List<Map<String, String>> obtenerValoresPorFilas(Sheet sheet, List<String> encabezados, String header1, String header2) throws IllegalArgumentException {
         List<Map<String, String>> valoresPorFilas = new ArrayList<>();
 
@@ -858,44 +450,6 @@ public class MethotsAzureMasterFiles {
         }
     }
 
-    public static Map<String, String> obtenerValoresPorEncabezado(Sheet sheet, String encabezadoCodCiudad, String encabezadoFecha) {
-        Map<String, String> valoresPorCodCiudad = new HashMap<>();
-
-        List<String> encabezados = obtenerValoresFila(sheet.getRow(0)); // Obtener encabezados de la primera fila
-        int columnaCodCiudad = -1;
-        int columnaFecha = -1;
-
-        // Encontrar las columnas de los encabezados específicos
-        for (int i = 0; i < encabezados.size(); i++) {
-            String encabezado = encabezados.get(i);
-            if (encabezado.equals(encabezadoCodCiudad)) {
-                columnaCodCiudad = i;
-            }
-            if (encabezado.equals(encabezadoFecha)) {
-                columnaFecha = i;
-            }
-        }
-
-        if (columnaCodCiudad == -1 || columnaFecha == -1) {
-            return valoresPorCodCiudad; // No se encontraron los encabezados especificados
-        }
-
-        Iterator<Row> rowIterator = sheet.iterator();
-        // Omitir la primera fila ya que contiene los encabezados
-        if (rowIterator.hasNext()) {
-            rowIterator.next();
-        }
-
-        while (rowIterator.hasNext()) {
-            Row row = rowIterator.next();
-            String codCiudad = obtenerValorVisibleCelda(row.getCell(columnaCodCiudad));
-            String valorFecha = obtenerValorVisibleCelda(row.getCell(columnaFecha));
-            valoresPorCodCiudad.put(codCiudad, valorFecha);
-        }
-
-        return valoresPorCodCiudad;
-    }
-
     public static void errorMessage(String mensaje) {
         JLabel label = new JLabel("<html><font color='red'>" + mensaje + "</font></html>");
         label.setFont(new Font("Arial", Font.PLAIN, 14)); // Puedes ajustar la fuente según tus preferencias
@@ -903,50 +457,6 @@ public class MethotsAzureMasterFiles {
         JOptionPane.showMessageDialog(null, label, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    public static void waitSeconds(int seconds) {
-        try {
-            Thread.sleep((seconds * 1000L));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /*public static String mostrarMenu(List<String> opciones) {
-
-        opciones.add(0, "Ninguno");
-
-        JFrame frame = new JFrame("Menú de Opciones");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        JComboBox<String> comboBox = new JComboBox<>(opciones.toArray(new String[0]));
-        comboBox.setSelectedIndex(0);
-
-        JButton button = new JButton("Seleccionar");
-
-
-        ActionListener actionListener = e -> frame.dispose();
-
-        button.addActionListener(actionListener);
-
-        JPanel panel = new JPanel();
-        panel.add(comboBox);
-        panel.add(button);
-
-        frame.add(panel);
-        frame.setSize(300, 100);
-        frame.setVisible(true);
-
-        while (frame.isVisible()) {
-            // Esperar hasta que la ventana se cierre
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return comboBox.getSelectedItem().toString();
-    }*/
 
     public static String mostrarMenu(List<String> opciones) {
         List<String> opcionesConNinguno = new ArrayList<>(opciones);
@@ -1026,124 +536,6 @@ public class MethotsAzureMasterFiles {
 
         return columnNames;
     }
-
-    /*public static List<String> createDualDropDownListsAndReturnSelectedValues(List<String> list1, List<String> list2) {
-        List<String> selectedValues = new ArrayList<>();
-
-        JFrame frame = new JFrame("SELECCIÓN DE HOJAS");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(400, 200);
-        frame.setLayout(new FlowLayout());
-
-        JComboBox<String> dropdown1 = new JComboBox<>(list1.toArray(new String[0]));
-        JComboBox<String> dropdown2 = new JComboBox<>(list2.toArray(new String[0]));
-        JButton addButton = new JButton("Agregar Selecciones");
-
-        frame.add(dropdown1);
-        frame.add(dropdown2);
-        frame.add(addButton);
-
-        // Panel para contener las selecciones y checkboxes
-        JPanel selectionsPanel = new JPanel(new GridLayout(0, 2));
-        JScrollPane scrollPane = new JScrollPane(selectionsPanel);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        frame.add(selectionsPanel);
-
-        addButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String selectedValue1 = (String) dropdown1.getSelectedItem();
-                String selectedValue2 = (String) dropdown2.getSelectedItem();
-
-                if (selectedValue1 != null && selectedValue2 != null) {
-                    String combinedSelection = selectedValue1 + SPECIAL_CHAR + selectedValue2;
-                    selectedValues.add(combinedSelection);
-
-                    // Crear checkbox para la selección recién agregada
-                    JCheckBox checkBox = new JCheckBox(combinedSelection);
-                    selectionsPanel.add(checkBox);
-
-                    // Eliminar elementos seleccionados de los desplegables
-                    list1.remove(selectedValue1);
-                    list2.remove(selectedValue2);
-
-                    // Actualizar los modelos de los desplegables
-                    dropdown1.setModel(new DefaultComboBoxModel<>(list1.toArray(new String[0])));
-                    dropdown2.setModel(new DefaultComboBoxModel<>(list2.toArray(new String[0])));
-
-                    System.out.println("Elementos agregados: " + combinedSelection);
-
-                    frame.revalidate();
-                    frame.repaint();
-                } else {
-                    // Puedes mostrar un mensaje de error si ambos elementos no están seleccionados
-                    JOptionPane.showMessageDialog(frame, "Selecciona un elemento de cada lista", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        });
-
-        // Botón para eliminar selecciones marcadas
-        JButton removeButton = new JButton("Eliminar Selecciones");
-        frame.add(removeButton);
-
-        removeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Eliminar selecciones marcadas
-                for (Component component : selectionsPanel.getComponents()) {
-                    if (component instanceof JCheckBox) {
-                        JCheckBox checkBox = (JCheckBox) component;
-                        if (checkBox.isSelected()) {
-                            selectedValues.remove(checkBox.getText());
-
-                            // Recuperar elementos eliminados a los desplegables
-                            String[] parts = checkBox.getText().split(SPECIAL_CHAR);
-                            if (!list1.contains(parts[0])) {
-                                list1.add(parts[0]);
-                            }
-                            if (!list2.contains(parts[1])) {
-                                list2.add(parts[1]);
-                            }
-
-                            // Actualizar los modelos de los desplegables
-                            dropdown1.setModel(new DefaultComboBoxModel<>(list1.toArray(new String[0])));
-                            dropdown2.setModel(new DefaultComboBoxModel<>(list2.toArray(new String[0])));
-
-                            selectionsPanel.remove(checkBox);
-                        }
-                    }
-                }
-
-                frame.revalidate();
-                frame.repaint();
-            }
-        });
-
-        // Botón para terminar el proceso de selección
-        JButton finishButton = new JButton("Terminar Selección");
-        frame.add(finishButton);
-
-        finishButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Puedes realizar acciones finales aquí, por ejemplo, cerrar la aplicación
-                frame.dispose();
-            }
-        });
-
-        frame.setVisible(true);
-
-        // Esperar hasta que se cierre la ventana
-        while (frame.isVisible()) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return selectedValues;
-    }*/
 
     public static List<String> createDualDropDownListsAndReturnSelectedValues(List<String> list1, List<String> list2) {
         List<String> selectedValues = new ArrayList<>();

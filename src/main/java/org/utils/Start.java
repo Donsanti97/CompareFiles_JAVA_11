@@ -7,12 +7,7 @@ import org.apache.poi.util.IOUtils;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -23,7 +18,6 @@ public class Start {
 
 
     public void start() {
-        //MethotsAzureMasterFiles readFiles = new MethotsAzureMasterFiles();
         System.out.println("\n" +
                 "  _______   ___      _________________________.____     \n" +
                 " /   ___/  /  _  \\    /     \\__    _/\\_   ___/|    |    \n" +
@@ -45,28 +39,14 @@ public class Start {
         }
     }
 
-    public static void moveDocument(String origen, String destino) throws IOException {
-        Path origenPath = Paths.get(origen);
-        Path destinoPath = Paths.get(destino);
-
-        // Mueve el documento desde la ubicación de origen a la ubicación de destino
-        Files.move(origenPath, destinoPath, StandardCopyOption.REPLACE_EXISTING);
-    }
-
     public static void excecution() {
         IOUtils.setByteArrayMaxOverride(300000000);
         System.setProperty("org.apache.poi.ooxml.strict", "false");
-        List<Map<String, String>> valoresEncabezados2;
-        List<Map<String, String>> valoresEncabezados1;
-        List<Map<String, String>> mapList1 = new ArrayList<>();
-        List<Map<String, String>> mapList2 = new ArrayList<>();
         try {
             JOptionPane.showMessageDialog(null, "Seleccione el archivo Azure a analizar");
             String azureFile = getDocument();
             JOptionPane.showMessageDialog(null, "Seleccione el archivo Maestro a analizar");
             String masterFiles = getDocument();
-            File file = new File(masterFiles);
-            String destino = System.getProperty("user.home") + File.separator + "Documentos" + File.separator + "procesedDocuments" + File.separator + file.getName();
 
 
             while (azureFile == null || masterFiles == null){
@@ -101,8 +81,8 @@ public class Start {
             List<String> sht1 = new ArrayList<>();
             List<String> sht2 = new ArrayList<>();
             List<String> dataList = createDualDropDownListsAndReturnSelectedValues(nameSheets1, nameSheets2);
-            List<String> encabezados1 = null;
-            List<String> encabezados2 = null;
+            List<String> encabezados1;
+            List<String> encabezados2;
             String encabezado = "";
             String codigo1 = "";
             String fechacorteAF = "";
@@ -197,7 +177,7 @@ public class Start {
                             JOptionPane.showMessageDialog(null, "Seleccione el encabezado del archivo Maestro que será analizada");
                             fechaCorteMF = mostrarMenu(encabezados2);
                         }
-                        messageSheets(sheet1, sheet2, workbook, workbook2, codigo1, fechacorteAF, codigo2, fechaCorteMF, encabezados2, encabezado);
+                        messageSheets(sheet1, sheet2, workbook, workbook2, codigo1, fechacorteAF, codigo2, fechaCorteMF, encabezado);
 
                     } else {
                         message = "La fecha de corte que intenta validar no se encuentra. \n La hoja [" + sheet2.getSheetName() + "] no se podrá analizar";
@@ -206,7 +186,7 @@ public class Start {
                     }
 
                 }else {
-                    messageSheets(sheet1, sheet2, workbook, workbook2, codigo1, fechacorteAF, codigo2, fechaCorteMF, encabezados2, encabezado);
+                    messageSheets(sheet1, sheet2, workbook, workbook2, codigo1, fechacorteAF, codigo2, fechaCorteMF, encabezado);
 
                 }
             }
@@ -223,8 +203,6 @@ public class Start {
             JOptionPane.showMessageDialog(null, "Archivos analizados correctamente sin errores");
 
 
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -234,11 +212,8 @@ public class Start {
     public static void messageSheets(Sheet sheet1, Sheet sheet2,
                                        Workbook workbook1, Workbook workbook2,
                                      String codigo1, String fechacorteAF,
-                                     String codigo2, String fechaCorteMF, List<String> encabezados2, String encabezado){
-        //String codigo2;
-        String fecha;
-        //String fechaCorteMF;
-        String message = "";
+                                     String codigo2, String fechaCorteMF, String encabezado){
+        String message;
         List<Map<String, String>> valoresEncabezados1;
         List<Map<String, String>> valoresEncabezados2;
         List<Map<String, String>> mapList1;
@@ -260,13 +235,12 @@ public class Start {
                             for (Map.Entry<String, String> entry2 : map2.entrySet()) {
 
 
-                                if (entry1.getKey().equalsIgnoreCase(entry2.getKey()) /*||
-                                        entry1.getKey().contains(entry2.getKey())*/ /*|| entry2.getKey().contains(entry1.getKey())*/) {
+                                if (entry1.getKey().equalsIgnoreCase(entry2.getKey())) {
 
                                     System.out.println("CÓDIGO ENCONTRADO: " + entry1.getKey());
 
-                                    String mapList2Value = "";
-                                    String mapList1Value = "";
+                                    String mapList2Value;
+                                    String mapList1Value;
 
                                     if (entry2.getValue().contains(entry1.getValue())){
                                         message = sheet1.getSheetName() + " - " + sheet2.getSheetName() +
@@ -293,13 +267,6 @@ public class Start {
                                             System.out.println(message);
                                         }
                                     }
-
-                                    //System.err.println("VALORES TRANSFORMADOS CODIGO: "+ entry1.getKey() + " -> " + mapList1Value + ", " + mapList2Value);
-
-
-
-
-
                                 }
                             }
                         }
@@ -310,185 +277,6 @@ public class Start {
                         "\n Por favor verifique la información de los archivo con respecto a las hojas " +
                         sheet1.getSheetName() + ", " + sheet2.getSheetName());
             }
-            /*------------------------------------------------------------------------------------------------*/
-            /*fecha = parsearFecha(fechaCorteMF);
-            System.out.println("Fecha modificada: " + fecha);
-
-            if (!fechacorteAF.equals(fecha)) {
-                String yesNoAnswer = showYesNoDialog("Los dos valores que intenta comparar estan contenidos en un encabezado tipo fecha de corte " +
-                        "\n O diferente al que seleccionó al comienzo del programa? ?");
-                if (yesNoAnswer.equals("SI")){
-
-                    JOptionPane.showMessageDialog(null, "Por favor seleccione los dos encabezados que va a comparar");
-
-                    JOptionPane.showMessageDialog(null, "Seleccione el encabezado \"Código\" del archivo Azure que será usado para el análisis entre hojas");
-                    String cod1 = mostrarMenu(encabezados1);
-                    while (cod1 == null) {
-                        errorMessage("No fue seleccionado el código. Por favor siga la instrucción");
-                        JOptionPane.showMessageDialog(null, "Seleccione el encabezado \"Código\" del archivo Azure que será usado para el análisis entre hojas");
-                        cod1 = mostrarMenu(encabezados1);
-                    }
-
-                    JOptionPane.showMessageDialog(null, "Seleccione el encabezado del archivo Azure que desee compara entre los dos archivos");
-                    String dateAF = mostrarMenu(encabezados1);
-                    if (dateAF == null || fechacorteAF.equals("Nunguno")) {
-                        errorMessage("No fue seleccionado la fecha de corte. Por favor siga la instrucción");
-                        JOptionPane.showMessageDialog(null, "Seleccione el encabezado del archivo Azure que desee compara entre los dos archivos");
-                        dateAF = mostrarMenu(encabezados1);
-                    }
-
-                    JOptionPane.showMessageDialog(null, "Seleccione el encabezado que corresponda al \"Código\" del archivo Maestro que será analizado");
-                    String cod2 = mostrarMenu(encabezados2);
-                    while (cod2 == null) {
-                        errorMessage("No fue seleccionado el el código. Por favor siga la instrucción");
-                        JOptionPane.showMessageDialog(null, "Seleccione el encabezado que corresponda al \"Código\" del archivo Maestro que será analizado");
-                        cod2 = mostrarMenu(encabezados2);
-                    }
-
-                    JOptionPane.showMessageDialog(null, "Seleccione el encabezado del archivo Maestro que será analizada");
-                    String dateMF = mostrarMenu(encabezados2);
-                    if (dateMF == null || fechaCorteMF.equals("Nunguno")) {
-                        errorMessage("No fue seleccionado la fecha de corte. Por favor siga la instrucción");
-                        JOptionPane.showMessageDialog(null, "Seleccione el encabezado del archivo Maestro que será analizada");
-                        dateMF = mostrarMenu(encabezados2);
-                    }
-
-                    valoresEncabezados1 = obtenerValoresPorFilas(sheet1, encabezados1, cod1, dateAF);
-                    valoresEncabezados2 = obtenerValoresPorFilas(workbook1, workbook2, sheet1.getSheetName(), sheet2.getSheetName(), cod2, dateMF, encabezado);
-
-                    if (valoresEncabezados1 != null && valoresEncabezados2 != null) {
-
-                        mapList1 = createMapList(valoresEncabezados1, cod1, dateAF);
-                        mapList2 = createMapList(valoresEncabezados2, cod2, dateMF);
-
-                        for (Map<String, String> map1 : mapList1) {
-                            for (Map.Entry<String, String> entry1 : map1.entrySet()) {
-                                for (Map<String, String> map2 : mapList2) {
-                                    for (Map.Entry<String, String> entry2 : map2.entrySet()) {
-
-
-                                        if (entry1.getKey().equalsIgnoreCase(entry2.getKey()) *//*||
-                                        entry1.getKey().contains(entry2.getKey())*//* *//*|| entry2.getKey().contains(entry1.getKey())*//*) {
-
-                                            System.out.println("CÓDIGO ENCONTRADO: " + entry1.getKey());
-
-                                            String mapList2Value = "";
-                                            String mapList1Value = "";
-
-                                            if (entry2.getValue().contains(entry1.getValue())){
-                                                message = sheet1.getSheetName() + " - " + sheet2.getSheetName() +
-                                                        "\n" + entry1.getKey() + "-> Los valores: " + entry1.getValue() + " & " + entry2.getValue() + " coinciden";
-                                                coincidencias.add(message);
-                                                System.out.println(message);
-                                            } else {
-                                                mapList2Value = ponerDecimales(entry2.getValue());
-                                                mapList1Value = ponerDecimales(entry1.getValue());
-                                                if (mapList1Value.equals(mapList2Value)) {
-                                                    message = sheet1.getSheetName() + " - " + sheet2.getSheetName() +
-                                                            "\n" + entry1.getKey() + "-> Los valores: " + entry1.getValue() + " & " + entry2.getValue() + " coinciden";
-                                                    coincidencias.add(message);
-                                                    System.out.println(message);
-                                                } else if (mapList2Value.contains(mapList1Value)) {
-                                                    message = sheet1.getSheetName() + " - " + sheet2.getSheetName() +
-                                                            "\n" + entry1.getKey() + "-> Los valores: " + entry1.getValue() + " & " + entry2.getValue() + " puede que sean iguales";
-                                                    coincidencias.add(message);
-                                                    System.out.println(message);
-                                                } else {
-                                                    message = sheet1.getSheetName() + " - " + sheet2.getSheetName() +
-                                                            "\n" + entry1.getKey() + "-> Los valores: " + entry1.getValue() + " & " + entry2.getValue() + " NO coinciden";
-                                                    errores.add(message);
-                                                    System.out.println(message);
-                                                }
-                                            }
-
-                                            //System.err.println("VALORES TRANSFORMADOS CODIGO: "+ entry1.getKey() + " -> " + mapList1Value + ", " + mapList2Value);
-
-
-
-
-
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        errorMessage("No es posible analizar los valores ya que los campos están incompletos." +
-                                "\n Por favor verifique la información de los archivo con respecto a las hojas " +
-                                sheet1.getSheetName() + ", " + sheet2.getSheetName());
-                    }
-
-                } else {
-                    message = "La fecha de corte que intenta validar no se encuentra. \n La hoja [" + sheet2.getSheetName() + "] no se podrá analizar";
-                    errorMessage(message);
-                    System.out.println(message);
-                }
-
-            } else {
-                //encabezados1 = getHeadersN(sheet1);
-                valoresEncabezados1 = obtenerValoresPorFilas(sheet1, encabezados1, codigo1, fechacorteAF);
-                valoresEncabezados2 = obtenerValoresPorFilas(workbook1, workbook2, sheet1.getSheetName(), sheet2.getSheetName(), codigo2, fechaCorteMF, encabezado);
-
-                if (valoresEncabezados1 != null && valoresEncabezados2 != null) {
-                    mapList1 = createMapList(valoresEncabezados1, codigo1, fechacorteAF);
-                    mapList2 = createMapList(valoresEncabezados2, codigo2, fechaCorteMF);
-                    for (Map<String, String> map1 : mapList1) {
-                        for (Map.Entry<String, String> entry1 : map1.entrySet()) {
-                            for (Map<String, String> map2 : mapList2) {
-                                for (Map.Entry<String, String> entry2 : map2.entrySet()) {
-
-
-                                    if (entry1.getKey().equalsIgnoreCase(entry2.getKey()) *//*||
-                                        entry1.getKey().contains(entry2.getKey())*//* *//*|| entry2.getKey().contains(entry1.getKey())*//*) {
-
-                                        System.out.println("CÓDIGO ENCONTRADO: " + entry1.getKey());
-
-                                        String mapList2Value = "";
-                                        String mapList1Value = "";
-
-                                        if (entry2.getValue().contains(entry1.getValue())){
-                                            message = sheet1.getSheetName() + " - " + sheet2.getSheetName() +
-                                                    "\n" + entry1.getKey() + "-> Los valores: " + entry1.getValue() + " & " + entry2.getValue() + " coinciden";
-                                            coincidencias.add(message);
-                                            System.out.println(message);
-                                        } else {
-                                            mapList2Value = ponerDecimales(entry2.getValue());
-                                            mapList1Value = ponerDecimales(entry1.getValue());
-                                            if (mapList1Value.equals(mapList2Value)) {
-                                                message = sheet1.getSheetName() + " - " + sheet2.getSheetName() +
-                                                        "\n" + entry1.getKey() + "-> Los valores: " + entry1.getValue() + " & " + entry2.getValue() + " coinciden";
-                                                coincidencias.add(message);
-                                                System.out.println(message);
-                                            } else if (mapList2Value.contains(mapList1Value)) {
-                                                message = sheet1.getSheetName() + " - " + sheet2.getSheetName() +
-                                                        "\n" + entry1.getKey() + "-> Los valores: " + entry1.getValue() + " & " + entry2.getValue() + " puede que sean iguales";
-                                                coincidencias.add(message);
-                                                System.out.println(message);
-                                            } else {
-                                                message = sheet1.getSheetName() + " - " + sheet2.getSheetName() +
-                                                        "\n" + entry1.getKey() + "-> Los valores: " + entry1.getValue() + " & " + entry2.getValue() + " NO coinciden";
-                                                errores.add(message);
-                                                System.out.println(message);
-                                            }
-                                        }
-
-                                        //System.err.println("VALORES TRANSFORMADOS CODIGO: "+ entry1.getKey() + " -> " + mapList1Value + ", " + mapList2Value);
-
-
-
-
-
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    errorMessage("No es posible analizar los valores ya que los campos están incompletos." +
-                            "\n Por favor verifique la información de los archivo con respecto a las hojas " +
-                            sheet1.getSheetName() + ", " + sheet2.getSheetName());
-                }
-            }*/
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
